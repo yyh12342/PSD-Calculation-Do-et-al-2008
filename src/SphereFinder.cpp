@@ -1,3 +1,4 @@
+﻿#include "Geometry.h"
 #include "SphereFinder.h"
 
 #include <cmath>
@@ -14,7 +15,7 @@ double SphereFinder::findLargestSphereDiameter(const Vec3 &point, const std::vec
     double d3 = std::numeric_limits<double>::max();
 
     // 논문의 계산 방법에 따라 가장 가까운 세 점 좌표 계산
-    for (size_t i = 0; i < atoms.size(); ++i)
+    for (int i = 0; i < atoms.size(); ++i)
     {
         double dist2 = distanceSquared(point, atoms[i].position);
 

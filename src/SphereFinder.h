@@ -1,4 +1,4 @@
-#ifndef SPHEREFINDER_H
+﻿#ifndef SPHEREFINDER_H
 #define SPHEREFINDER_H
 
 #include "Geometry.h"

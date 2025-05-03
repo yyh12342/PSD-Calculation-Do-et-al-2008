@@ -1,4 +1,4 @@
-// #ifndef PDBPARSER_H
+﻿// #ifndef PDBPARSER_H
 // #define PDBPARSER_H
 
 // #include "Geometry.h"

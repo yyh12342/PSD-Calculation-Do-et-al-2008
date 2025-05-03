@@ -1,17 +1,19 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(PoreSizeDistributionCalculator)
+project(PSDCalculator)
 
+# C++17, no compiler extensions
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_executable(PoreSizeDistributionCalculator 
-    src/main.cpp 
-    Geometry.h # 우선순위 때문에 추가
-    # src/PDBParser.h
-    # src/PDBParser.cpp 
-    src/Potential.h
-    src/Potential.cpp 
-    src/SphereFinder.h
-    src/SphereFinder.cpp 
-    src/Histogram.h
+# 실행 파일
+add_executable(PSDCalculator
+    src/main.cpp
+    src/Potential.cpp
+    src/SphereFinder.cpp
     src/Histogram.cpp)
+
+# include 디렉터리
+target_include_directories(PSDCalculator
+    PRIVATE src)

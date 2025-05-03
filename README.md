@@ -7,13 +7,13 @@ accessible volume: 구 형태의 최대 volume
 perfect slit pore일 때 accessible volume이 0이 될 수 있음  
 accessible volume의 합계를 총 기공 부피로 함  
 
-probe 입자로 아르곤 사용하며 accesible volume에서 0 이하의 퍼텐셜을 가짐  
-시뮬레이션 박스의 임의의 위치에 아르곤 입자를 m번 삽입하여 accesible volume을 결정  
+probe 입자로 아르곤 사용하며 accessible volume에서 0 이하의 퍼텐셜을 가짐  
+시뮬레이션 박스의 임의의 위치에 아르곤 입자를 m번 삽입하여 accessible volume을 결정  
 기공 크기 상한은 고체에 따른 최대 기공 크기에 달려있음  
 
-단순히 계산하면 accesible volume은 삽입 성공 확률 f에 box volume 곱한 값  
+단순히 계산하면 accessible volume은 삽입 성공 확률 f에 box volume 곱한 값  
 
-세 고체 원자 C의 좌표를 통해 accesible volume 구해야 함  
+세 고체 원자 C의 좌표를 통해 accessible volume 구해야 함  
 C1: 퍼텐셜이 0 이하인 무작위 점 A에서 가장 가까운 고체 원자  
 C2: 점 A에서 두번째로 가까운 고체 원자  
 벡터 C1A 상에서 C1까지의 거리와 C2 까지의 거리가 같도록 점 B 설정  
@@ -22,8 +22,8 @@ C3: 점 A에서 세번째로 가까운 고체 원자
 벡터 C1D나 벡터 C2D 또는는 벡터 C3D에서 퍼텐셜이 0인 점 탐색  
 세 점 중 하나를 지나며 점 D를 중심으로 하는 가장 큰 구를 선택하면, 그 내부가 0 이하의 퍼텐셜 (점 A도 내부에 포함됨)  
 
-개별 accesible volume의 합이 총 accesible volume  
-이 accesible volume은 말 그대로 접근 가능한 볼륨이며 실질적인 물리적 직경보다 작음  
+개별 accessible volume의 합이 총 accessible volume  
+이 accessible volume은 말 그대로 접근 가능한 볼륨이며 실질적인 물리적 직경보다 작음  
 
 
 
@@ -37,7 +37,7 @@ C3: 점 A에서 세번째로 가까운 고체 원자
 6. C3 선택하고 점 D 선택  
 7. 벡터 C1D, C2D, C3D에서 각각 퍼텐셜이 0인 점 선택  
 8. 세 점 중에서 D까지의 거리가 가장 먼 점 선택  
-9. 이 점을 지나고 점 D를 중심으로 하는 구가 accesible volume  
+9. 이 점을 지나고 점 D를 중심으로 하는 구가 accessible volume  
 
 
 
@@ -63,4 +63,57 @@ C3: 점 A에서 세번째로 가까운 고체 원자
 
 - Histogram  
 각 지름 bin 별로 volume 저장  
-이후 csv 또는 콘솔로 출력  
+
+
+
+# 빌드 방법  
+
+mkdir build  
+cd build  
+cmake .. -G "Visual Studio 17 2022" -A x64  
+
+cmake --build . --config Release  
+
+
+
+# 실행 방법  
+
+- PSDCalculator  
+cd C:\Users\yooyh\Project\PSD-Calculation-Do-et-al-2008  
+build\Release\PSDCalculator.exe  
+
+- plot  
+py plot_psd.py  
+이 코드에서 csv와 png 파일명 수정 가능  
+
+파이썬 버전은 3.12.7  
+
+
+
+# 빌드 시 오류 해결  
+
+- 한글 깨질 때  
+vscode 실행 후, 오른쪽 하단 인코딩에서 UTF-8 with BOM  
+
+
+
+# 입력값  
+
+PSDCalculator에 넣을 테스트 입력값  
+
+1  
+0.3405  
+119.8  
+0.340  
+28.0  
+0.142  
+5 5 3  
+1.0 2.0  
+1000000  
+
+2  
+0.3405  
+119.8  
+0.340  
+28.0  
+0.142  

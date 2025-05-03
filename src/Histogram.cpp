@@ -1,4 +1,4 @@
-#include "Histogram.h"
+﻿#include "Histogram.h"
 
 #include <cmath>
 #include <fstream>
