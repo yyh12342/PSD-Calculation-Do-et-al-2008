@@ -30,3 +30,25 @@
 *.exe
 *.out
 *.app
+
+
+
+# === Build directories ===
+build/
+bin/
+obj/
+
+# === CMake ===
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# === IDE / Editor ===
+.vscode/
+*.code-workspace
+.idea/
+
+# === OS ===
+.DS_Store
+Thumbs.db
