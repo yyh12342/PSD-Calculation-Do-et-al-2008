@@ -25,6 +25,8 @@ C3: 점 A에서 세번째로 가까운 고체 원자
 개별 accessible volume의 합이 총 accessible volume  
 이 accessible volume은 말 그대로 접근 가능한 볼륨이며 실질적인 물리적 직경보다 작음  
 
+퍼텐셜의 계산은 LJ potential로  
+
 
 
 # 알고리듬  
