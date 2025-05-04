@@ -77,4 +77,19 @@ inline double distance(const Vec3 &a, const Vec3 &b)
     return ::sqrt(distanceSquared(a, b));
 }
 
+// 노멀라이즈
+inline Vec3 normalize(const Vec3 &v)
+{
+    double n = ::sqrt(dot(v, v));
+    
+    if (n > 1e-12)
+    {
+        return { v.x / n, v.y / n, v.z / n };
+    }
+    else
+    {
+        return { 0.0, 0.0, 0.0 };
+    }
+}
+
 #endif
