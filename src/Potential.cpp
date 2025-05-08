@@ -6,7 +6,7 @@
 
 // 아르곤 파라미터
 // 시그마: 입자 간 상호작용(반발력)하는 길이 [nm]
-// 입실론: 퍼텐셜 E 곡선의 깊이
+// 입실론: 퍼텐셜 E 곡선의 깊이 [K]
 LJParam LJPotential::probeParam = {0.3405, 119.8};
 // 기본 원소 파라미터
 std::unordered_map<std::string, LJParam> LJPotential::baseParams;
