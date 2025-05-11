@@ -19,6 +19,6 @@ plt.ylabel('Reduced Accessible Volume')
 plt.title('Pore Size Distribution')
 plt.grid(True)
 plt.tight_layout()
-plt.savefig("results/plots/psd_plot.png") # 여기서 png 파일명 변경
+plt.savefig("results/psd_plot.png") # 여기서 png 파일명 변경
 
 print("Plot saved")
