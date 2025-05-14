@@ -36,10 +36,12 @@ void Parse(const std::string &filename,
 std::vector<double> ComputeDiameters(const Box &simulationBox,
     const std::vector<Atom> &atoms);
 
+double ComputeDmax(const Box &box,
+    const std::vector<Atom> &atoms);
+
 // histogram 구해서 (diameter, V_acc,j) 쌍 리스트 생성
 std::vector<std::pair<double,double>> ComputeAccessibleVolume(const std::vector<double> &diameters,
-    double Vbox,
-    double Dmax);
+    double Vbox);
 
 // CSV 출력
 void WriteCSV(const std::vector<std::pair<double,double>> &distribution,

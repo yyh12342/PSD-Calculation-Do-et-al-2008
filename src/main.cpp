@@ -17,22 +17,6 @@ int main(int argc, char** argv)
     std::string mode = argv[2];
     std::string outFile = (argc >= 4 ? argv[3] : inFile + ".csv");
 
-    // bool scaled = false;
-    // if (mode == "graphite")
-    // {
-    //     scaled = true;
-    // }
-    // else if (mode == "cnt")
-    // {
-    //     scaled = true;
-    // }
-    // else
-    // {
-    //     std::cerr << "mode는 graphite 또는 cnt만 허용됩니다.\n";
-
-    //     return 1;
-    // }
-
     Box simulationBox;
     std::vector<Atom> atoms;
 
@@ -51,56 +35,12 @@ int main(int argc, char** argv)
     double Vbox = std::fabs(simulationBox.xhi - simulationBox.xlo)
         * std::fabs(simulationBox.yhi - simulationBox.ylo)
         * std::fabs(simulationBox.zhi - simulationBox.zlo);
-    
-    double Dmax = 0;
-
-    if (mode == "graphite")
-    {
-        // z 좌표로 Dmax 판단
-        std::vector<double> zs;
-        zs.reserve(atoms.size());
-
-        for (auto &a:atoms)
-        {
-            zs.push_back(a.z);
-        }
-
-        std::sort(zs.begin(), zs.end());
-        std::vector<double> layers{zs[0]};
-
-        for (double z:zs)
-        {
-            if (std::fabs(z-layers.back()) > 1e-3)
-            {
-                layers.push_back(z);
-            }
-        }
-
-        double maxsp = 0;
-        for (int i = 1; i < layers.size(); ++i)
-        {
-            maxsp = std::max(maxsp, layers[i] - layers[i-1]);
-        }
-
-        Dmax = maxsp * 1.2; // 최대 범위를 한 20퍼 정도만 더 크게
-
-        std::cout<<"[graphite] Dmax=" << Dmax << " nm\n";
-    }
-    else if (mode=="cnt")
-    {
-        // TODO 여기부터 진행하자
-        // Dmax = 
-    }
-    else
-    {
-        std::cerr<<"mode 오류\n"; return 1;
-    }
 
     // 지름
     auto diameters = ComputeDiameters(simulationBox, atoms);
 
     // Vacc
-    auto distribution = ComputeAccessibleVolume(diameters, Vbox, Dmax);
+    auto distribution = ComputeAccessibleVolume(diameters, Vbox);
 
     // CSV 출력
     try

@@ -8,14 +8,15 @@
 #include <algorithm>
 
 static const double sigmaAr = 0.3405; // 아르곤 충돌 지름 σ [nm]
-static const double epsilonAr = 0.9970; // 아르곤 depth ε
+// static const double epsilonAr = 0.9970; // 아르곤 depth ε
 static const double sigmaC = 0.3400; // 탄소 충돌 지름 σ [nm]
-static const double epsilonC = 0.2300; // 탄소 depth ε
+// static const double epsilonC = 0.2300; // 탄소 depth ε
 
-static const double cutoffFactor = 2.5; // mix σ 기준 컷오프
+// static const double cutoffFactor = 2.5; // mix σ 기준 컷오프
 
 static const int M = 1000000; // Monte Carlo 시도 횟수
-// static const double Dmax = 2.0; // 최대 직경 [nm]
+// static const int M = 1; // 디버그용
+static const double Dmax = 2.0; // 최대 직경 [nm]
 static const int bin = 50; // bin 개수
 
 void Parse(const std::string &filename, // 구조 입력 파일
@@ -60,16 +61,32 @@ void Parse(const std::string &filename, // 구조 입력 파일
             strVec.push_back(str); // iss에 있는 애들 다 strVec에 삽입
         }
 
-        // pp면 periodic이므로 주기적 보정을 해야 함
-        simulationBox.px = (strVec.size()>3 && strVec[3]=="pp");
-        simulationBox.py = (strVec.size()>4 && strVec[4]=="pp");
-        simulationBox.pz = (strVec.size()>5 && strVec[5]=="pp");
+        // // pp면 periodic이므로 주기적 보정을 해야 함
+        // simulationBox.px = (strVec.size()>3 && strVec[3]=="pp");
+        // simulationBox.py = (strVec.size()>4 && strVec[4]=="pp");
+        // simulationBox.pz = (strVec.size()>5 && strVec[5]=="pp");
     }
 
     // 경계
-    infile >> simulationBox.xlo >> simulationBox.xhi;
-    infile >> simulationBox.ylo >> simulationBox.yhi;
-    infile >> simulationBox.zlo >> simulationBox.zhi;
+    double tmp; // 버리는 값
+    infile >> simulationBox.xlo >> simulationBox.xhi >> tmp;
+    infile >> simulationBox.ylo >> simulationBox.yhi >> tmp;
+    infile >> simulationBox.zlo >> simulationBox.zhi >> tmp;
+
+    // 옹스트롬 변환
+    simulationBox.xlo *= 0.1;
+    simulationBox.xhi *= 0.1;
+    simulationBox.ylo *= 0.1;
+    simulationBox.yhi *= 0.1;
+    simulationBox.zlo *= 0.1;
+    simulationBox.zhi *= 0.1;
+
+    // std::cout << "[DEBUG] simulationBox.xlo="<<simulationBox.xlo<<"\n";
+    // std::cout << "[DEBUG] simulationBox.xhi="<<simulationBox.xhi<<"\n";
+    // std::cout << "[DEBUG] simulationBox.ylo="<<simulationBox.ylo<<"\n";
+    // std::cout << "[DEBUG] simulationBox.yhi="<<simulationBox.yhi<<"\n";
+    // std::cout << "[DEBUG] simulationBox.zlo="<<simulationBox.zlo<<"\n";
+    // std::cout << "[DEBUG] simulationBox.zhi="<<simulationBox.zhi<<"\n";
 
     while (std::getline(infile, line))
     {
@@ -92,7 +109,7 @@ void Parse(const std::string &filename, // 구조 입력 파일
 
     for (auto &c : headerCols)
     {
-        if (c=="xs"||c=="ys"||c=="zs")
+        if (c == "xs" || c == "ys" || c == "zs")
         {
             scaled = true;
 
@@ -145,46 +162,6 @@ void Parse(const std::string &filename, // 구조 입력 파일
     }
 
     infile.close();
-
-    // // 충돌 거리가 0.5보다 크면 옹스트롬이라 가정하고 nm로 변환
-    // if (!atoms.empty())
-    // {
-    //     double minDist2 = 1e9;
-
-    //     for (size_t i = 0; i < atoms.size(); ++i)
-    //     {
-    //         for (size_t j = i+1; j < atoms.size(); ++j)
-    //         {
-    //             double dx = atoms[i].x - atoms[j].x;
-    //             double dy = atoms[i].y - atoms[j].y;
-    //             double dz = atoms[i].z - atoms[j].z;
-
-    //             double d2 = dx*dx + dy*dy + dz*dz;
-
-    //             if (d2 < minDist2)
-    //             {
-    //                 minDist2 = d2;
-    //             }
-    //         }
-    //     }
-
-    //     if (std::sqrt(minDist2) > 0.5)
-    //     {
-    //         for (auto &a : atoms)
-    //         {
-    //             a.x *= 0.1;
-    //             a.y *= 0.1;
-    //             a.z *= 0.1;
-    //         }
-
-    //         simulationBox.xlo *= 0.1;
-    //         simulationBox.xhi *= 0.1;
-    //         simulationBox.ylo *= 0.1;
-    //         simulationBox.yhi *= 0.1;
-    //         simulationBox.zlo *= 0.1;
-    //         simulationBox.zhi *= 0.1;
-    //     }
-    // }
 }
 
 std::vector<double> ComputeDiameters(const Box &simulationBox,
@@ -193,10 +170,12 @@ std::vector<double> ComputeDiameters(const Box &simulationBox,
     std::vector<double> diameters;
     diameters.reserve(M);
 
-    double Lx = simulationBox.xhi - simulationBox.xlo; // 시뮬레이션 박스 크기 x 길이
-    double Ly = simulationBox.yhi - simulationBox.ylo; // 시뮬레이션 박스 크기 y 길이
-    double Lz = simulationBox.zhi - simulationBox.zlo; // 시뮬레이션 박스 크기 z 길이
+    // double Lx = simulationBox.xhi - simulationBox.xlo; // 시뮬레이션 박스 크기 x 길이
+    // double Ly = simulationBox.yhi - simulationBox.ylo; // 시뮬레이션 박스 크기 y 길이
+    // double Lz = simulationBox.zhi - simulationBox.zlo; // 시뮬레이션 박스 크기 z 길이
 
+    // TODO 시뮬레이션 박스 크기를 다공성 재료 내부로 한정해야 함
+    // 지금은 전체 범위임
     std::mt19937_64 gen{std::random_device{}()}; // 몬테카를로
     std::uniform_real_distribution<double> randX(simulationBox.xlo, simulationBox.xhi),
         randY(simulationBox.ylo, simulationBox.yhi),
@@ -204,8 +183,8 @@ std::vector<double> ComputeDiameters(const Box &simulationBox,
 
     // 혼합 파라미터
     double sigma_mix = 0.5*(sigmaAr + sigmaC);
-    double eps_mix = std::sqrt(epsilonAr * epsilonC);
-    double cutoff = cutoffFactor * sigma_mix;
+    // double eps_mix = std::sqrt(epsilonAr * epsilonC);
+    // double cutoff = cutoffFactor * sigma_mix;
 
     // double sigmaSquare = sigma*sigma; // 충돌 거리 제곱
 
@@ -215,72 +194,9 @@ std::vector<double> ComputeDiameters(const Box &simulationBox,
         double Ax = randX(gen); // A의 x 성분
         double Ay = randY(gen); // A의 y 성분
         double Az = randZ(gen); // A의 z 성분
-
-        // φ 계산
-        double phi=0;
-
-        for (auto &C:atoms)
-        {
-            double rx = Ax - C.x;
-            double ry = Ay - C.y;
-            double rz = Az - C.z;
-
-            if (simulationBox.px)
-            {
-                if (rx > 0.5 * Lx)
-                {
-                    rx -= Lx;
-                }
-                if (rx < -0.5 * Lx)
-                {
-                    rx += Lx;
-                }
-            }
-            if (simulationBox.py)
-            {
-                if (ry > 0.5 * Ly)
-                {
-                    ry -= Ly;
-                }
-                if (ry < -0.5*  Ly)
-                {
-                    ry += Ly;
-                }
-            }
-            if (simulationBox.pz)
-            {
-                if (rz > 0.5 * Lz)
-                {
-                    rz -= Lz;
-                }
-                if (rz < -0.5 * Lz)
-                {
-                    rz += Lz;
-                }
-            }
-
-            double r2 = rx*rx + ry*ry + rz*rz;
-            if (r2 > cutoff*cutoff)
-            {
-                continue;
-            }
-
-            double invR2 = sigma_mix*sigma_mix / r2;
-            double invR6 = invR2*invR2*invR2;
-
-            // 4ε (invR12 - invR6)
-            phi += 4*eps_mix*(invR6*invR6 - invR6);
-
-            if (phi > 0)
-            {
-                break;
-            }
-        }
-
-        if (phi > 0)
-        {
-            continue;
-        }
+        // double Ax = 5;
+        // double Ay = 5;
+        // double Az = 0.4;
 
         // C1 C2 C3 찾기 및 φ(r_A) 체크
         double min1 = 1e9; // AC1 제곱이 될 값
@@ -300,43 +216,43 @@ std::vector<double> ComputeDiameters(const Box &simulationBox,
             double dACy = Ay - atoms[j].y; // AC의 y 길이
             double dACz = Az - atoms[j].z; // AC의 z 길이
 
-            // 주기적 경계면 특정 상황에서 반대쪽 거를 쓰는 게 더 가까움
-            if (simulationBox.px)
-            {
-                if (dACx > 0.5 * Lx)
-                {
-                    dACx -= Lx;
-                }
+            // // 주기적 경계면 특정 상황에서 반대쪽 거를 쓰는 게 더 가까움
+            // if (simulationBox.px)
+            // {
+            //     if (dACx > 0.5 * Lx)
+            //     {
+            //         dACx -= Lx;
+            //     }
 
-                if (dACx < -0.5 * Lx)
-                {
-                    dACx += Lx;
-                }
-            }
-            if (simulationBox.py)
-            {
-                if (dACy > 0.5 * Ly)
-                {
-                    dACy -= Ly;
-                }
+            //     if (dACx < -0.5 * Lx)
+            //     {
+            //         dACx += Lx;
+            //     }
+            // }
+            // if (simulationBox.py)
+            // {
+            //     if (dACy > 0.5 * Ly)
+            //     {
+            //         dACy -= Ly;
+            //     }
 
-                if (dACy < -0.5 * Ly)
-                {
-                    dACy += Ly;
-                }
-            }
-            if (simulationBox.pz)
-            {
-                if (dACz > 0.5 * Lz)
-                {
-                    dACz -= Lz;
-                }
+            //     if (dACy < -0.5 * Ly)
+            //     {
+            //         dACy += Ly;
+            //     }
+            // }
+            // if (simulationBox.pz)
+            // {
+            //     if (dACz > 0.5 * Lz)
+            //     {
+            //         dACz -= Lz;
+            //     }
 
-                if (dACz < -0.5 * Lz)
-                {
-                    dACz += Lz;
-                }
-            }
+            //     if (dACz < -0.5 * Lz)
+            //     {
+            //         dACz += Lz;
+            //     }
+            // }
 
             double dACsquare = dACx*dACx + dACy*dACy + dACz*dACz; // AC 길이 제곱
 
@@ -364,11 +280,14 @@ std::vector<double> ComputeDiameters(const Box &simulationBox,
             }
         }
 
-        // // min1을 통해 퍼텐셜 결정
-        // if (min1 < sigmaSquare) // 퍼텐셜이 0 이상이면 실패
-        // {
-        //     continue;
-        // }
+        // std::cout << "[DEBUG] min1="<<min1<<"\nmin2="<<min2<<"\nmin3="<<min3<<"\n";
+
+        // min1을 통해 성공 여부 결정
+        if (min1 < sigma_mix * sigma_mix) // 퍼텐셜이 0 이상이면 실패
+        {
+            // std::cout << "[DEBUG] min1="<<min1<<" < sigma_mix * sigma_mix"<<sigma_mix * sigma_mix<<"\n";
+            continue;
+        }
 
         // numC1 numC2 numC3번째 atoms를 각각 C1 C2 C3로 설정
         const Atom &C1 = atoms[numC1];
@@ -396,24 +315,16 @@ std::vector<double> ComputeDiameters(const Box &simulationBox,
         double Bz = Az + lam1 * dAC1z; // B의 z 성분
 
         // rCB 벡터
-        auto rCB = [&](const Atom &C, double &vx, double &vy, double &vz){vx = Bx - C.x;
-            vy = By - C.y;
-            vz = Bz - C.z;};
+        double dBC1x = Bx - C1.x; // BC1의 x 길이
+        double dBC1y = By - C1.y; // BC1의 y 길이
+        double dBC1z = Bz - C1.z; // BC1의 z 길이
+        double dBC2x = Bx - C2.x; // BC2의 x 길이
+        double dBC2y = By - C2.y; // BC2의 y 길이
+        double dBC2z = Bz - C2.z; // BC2의 z 길이
+        double dBC3x = Bx - C3.x; // BC3의 x 길이
+        double dBC3y = By - C3.y; // BC3의 y 길이
+        double dBC3z = Bz - C3.z; // BC3의 z 길이
 
-        double dBC1x; // BC1의 x 길이
-        double dBC1y; // BC1의 y 길이
-        double dBC1z; // BC1의 z 길이
-        double dBC2x; // BC2의 x 길이
-        double dBC2y; // BC2의 y 길이
-        double dBC2z; // BC2의 z 길이
-        double dBC3x; // BC3의 x 길이
-        double dBC3y; // BC3의 y 길이
-        double dBC3z; // BC3의 z 길이
-
-        rCB(C1, dBC1x, dBC1y, dBC1z); // rCB 벡터에서 C1일 때 BC1의 x, y, z 길이 설정
-        rCB(C2, dBC2x, dBC2y, dBC2z); // rCB 벡터에서 C2일 때 BC2의 x, y, z 길이 설정
-        rCB(C3, dBC3x, dBC3y, dBC3z); // rCB 벡터에서 C3일 때 BC3의 x, y, z 길이 설정
-        
         double dBC1pBC2x = dBC1x + dBC2x; // BC1 x 길이 + BC2 x 길이
         double dBC1pBC2y = dBC1y + dBC2y; // BC1 y 길이 + BC2 y 길이
         double dBC1pBC2z = dBC1z + dBC2z; // BC1 z 길이 + BC2 z 길이
@@ -445,28 +356,28 @@ std::vector<double> ComputeDiameters(const Box &simulationBox,
         double dC2 = dist(C2);
         double dC3 = dist(C3);
 
-        double radius = std::min({ dC1, dC2, dC3 }) - sigma_mix; // 반경 radius
+        // std::cout << "[DEBUG] dC1="<<dC1<<"\ndC2="<<dC2<<"\ndC3="<<dC3<<"\n";
 
-        // if (radius < 0)
-        // {
-        //     radius = 0.0;
-        // }
+        double radius = dC2 - sigma_mix; // 반경 radius
 
-        double diameter = 2.0 * radius; // 지름 diameter
         if (radius <= 0)
         {
-            diameter = 0.0;
+            // std::cout << "[DEBUG] radius="<<radius<<" <= 0\n";
+            continue;
         }
 
+        double diameter = 2.0 * radius; // 지름 diameter
+        
         diameters.push_back(diameter);
+
+        // std::cout<<"[DEBUG] D="<<diameter<<"\n\n";
     }
 
     return diameters;
 }
 
 std::vector<std::pair<double,double>> ComputeAccessibleVolume(const std::vector<double> &diameters,
-    double Vbox,
-    double Dmax)
+    double Vbox)
 {
     std::vector<int> Mj(bin, 0);
 
@@ -485,7 +396,7 @@ std::vector<std::pair<double,double>> ComputeAccessibleVolume(const std::vector<
     std::vector<std::pair<double,double>> dist;
     dist.reserve(bin);
 
-    double dV = Vbox / (double)M;
+    double dV = 1 / (double)M;
 
     for (int j = 0; j < bin; ++j)
     {
