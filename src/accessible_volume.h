@@ -30,14 +30,16 @@ struct Box
 // 입력 파일 파싱
 void Parse(const std::string &filename,
     Box &simulationBox,
-    std::vector<Atom> &atoms);
+    std::vector<Atom> &atoms,
+    int modeNum);
 
 // 몬테카를로로 지름 계산
 std::vector<double> ComputeDiameters(const Box &simulationBox,
-    const std::vector<Atom> &atoms);
+    const std::vector<Atom> &atoms,
+    int modeNum);
 
-double ComputeDmax(const Box &box,
-    const std::vector<Atom> &atoms);
+// double ComputeDmax(const Box &box,
+//     const std::vector<Atom> &atoms);
 
 // histogram 구해서 (diameter, V_acc,j) 쌍 리스트 생성
 std::vector<std::pair<double,double>> ComputeAccessibleVolume(const std::vector<double> &diameters,

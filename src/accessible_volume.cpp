@@ -14,14 +14,15 @@ static const double sigmaC = 0.3400; // 탄소 충돌 지름 σ [nm]
 
 // static const double cutoffFactor = 2.5; // mix σ 기준 컷오프
 
-// static const int M = 1000000; // Monte Carlo 시도 횟수
-static const int M = 10; // 디버그용
+static const int M = 1000000; // Monte Carlo 시도 횟수
+// static const int M = 10; // 디버그용
 static const double Dmax = 2.0; // 최대 직경 [nm]
 static const int bin = 50; // bin 개수
 
 void Parse(const std::string &filename, // 구조 입력 파일
     Box &simulationBox, // 시뮬레이션 박스
-    std::vector<Atom> &atoms) // 각 원자
+    std::vector<Atom> &atoms,
+    int modeNum) // 각 원자
 {
     std::ifstream infile(filename); // 구조 입력 파일
     if (!infile.is_open())
@@ -68,11 +69,21 @@ void Parse(const std::string &filename, // 구조 입력 파일
     }
 
     // 경계
-    double tmp; // 버리는 값
-    infile >> simulationBox.xlo >> simulationBox.xhi >> tmp;
-    infile >> simulationBox.ylo >> simulationBox.yhi >> tmp;
-    infile >> simulationBox.zlo >> simulationBox.zhi >> tmp;
-
+    if (modeNum == 0) // graphite 모드
+    {
+        double tmp; // 버리는 값
+        infile >> simulationBox.xlo >> simulationBox.xhi >> tmp;
+        infile >> simulationBox.ylo >> simulationBox.yhi >> tmp;
+        infile >> simulationBox.zlo >> simulationBox.zhi >> tmp;
+    }
+    else if (modeNum == 1)
+    {
+        infile >> simulationBox.xlo >> simulationBox.xhi;
+        infile >> simulationBox.ylo >> simulationBox.yhi;
+        infile >> simulationBox.zlo >> simulationBox.zhi;
+    }
+    
+    
     // 옹스트롬 변환
     simulationBox.xlo *= 0.1;
     simulationBox.xhi *= 0.1;
@@ -165,7 +176,8 @@ void Parse(const std::string &filename, // 구조 입력 파일
 }
 
 std::vector<double> ComputeDiameters(const Box &simulationBox,
-    const std::vector<Atom> &atoms)
+    const std::vector<Atom> &atoms,
+    int modeNum)
 {
     std::vector<double> diameters;
     diameters.reserve(M);
@@ -188,6 +200,8 @@ std::vector<double> ComputeDiameters(const Box &simulationBox,
 
     // double sigmaSquare = sigma*sigma; // 충돌 거리 제곱
 
+    const double ztol = 0.1; // graphite 모드일 때 그래핀 층 구분
+
     for (int i = 0; i < M; ++i)
     {
         // A 랜덤
@@ -204,81 +218,199 @@ std::vector<double> ComputeDiameters(const Box &simulationBox,
         double min3 = 1e9; // AC3 제곱이 될 값
 
         size_t numC1 = 0; // C1의 번호
-        size_t numC2 = 0; // C2의 번호
-        size_t numC3 = 0; // C3의 번호
+        // size_t numC2 = 0; // C2의 번호
+        // size_t numC3 = 0; // C3의 번호
 
-        // TODO 혹시 시간을 더 줄이고 싶으면 tree 같은 거 써서 검색 시스템 만들기
+        size_t numC2 = SIZE_MAX; // C2의 번호
+        size_t numC3 = SIZE_MAX; // C3의 번호
+
         for (size_t j = 0; j < atoms.size(); ++j)
         {
-            // A부터 C까지의 거리
-            // C는 임의의 원자
             double dACx = Ax - atoms[j].x; // AC의 x 길이
             double dACy = Ay - atoms[j].y; // AC의 y 길이
             double dACz = Az - atoms[j].z; // AC의 z 길이
 
-            // // 주기적 경계면 특정 상황에서 반대쪽 거를 쓰는 게 더 가까움
-            // if (simulationBox.px)
-            // {
-            //     if (dACx > 0.5 * Lx)
-            //     {
-            //         dACx -= Lx;
-            //     }
-
-            //     if (dACx < -0.5 * Lx)
-            //     {
-            //         dACx += Lx;
-            //     }
-            // }
-            // if (simulationBox.py)
-            // {
-            //     if (dACy > 0.5 * Ly)
-            //     {
-            //         dACy -= Ly;
-            //     }
-
-            //     if (dACy < -0.5 * Ly)
-            //     {
-            //         dACy += Ly;
-            //     }
-            // }
-            // if (simulationBox.pz)
-            // {
-            //     if (dACz > 0.5 * Lz)
-            //     {
-            //         dACz -= Lz;
-            //     }
-
-            //     if (dACz < -0.5 * Lz)
-            //     {
-            //         dACz += Lz;
-            //     }
-            // }
-
             double dACsquare = dACx*dACx + dACy*dACy + dACz*dACz; // AC 길이 제곱
 
-            // 거리에 따라 C1 C2 C3 설정
             if (dACsquare < min1)
             {
-                min3 = min2;
-                numC3 = numC2;
-                min2 = min1;
-                numC2 = numC1;
                 min1 = dACsquare;
                 numC1 = j;
             }
-            else if (dACsquare < min2)
+        }
+
+        if (modeNum == 0) // graphite 모드
+        {
+            for(size_t j = 0; j < atoms.size(); ++j)
             {
-                min3 = min2;
-                numC3 = numC2;
-                min2 = dACsquare;
-                numC2 = j;
+                if (j == numC1)
+                {
+                    continue;
+                }
+
+                if (std::fabs(atoms[j].z - atoms[numC1].z) < ztol)
+                {
+                    continue;
+                }
+
+                double dACx = Ax - atoms[j].x; // AC의 x 길이
+                double dACy = Ay - atoms[j].y; // AC의 y 길이
+                double dACz = Az - atoms[j].z; // AC의 z 길이
+
+                double dACsquare = dACx*dACx + dACy*dACy + dACz*dACz; // AC 길이 제곱
+
+                if (dACsquare < min2)
+                {
+                    min2 = dACsquare;
+                    numC2 = j;
+                }
             }
-            else if (dACsquare < min3)
+
+            if (numC2 == SIZE_MAX)
             {
-                min3 = dACsquare;
-                numC3 = j;
+                for(size_t j = 0; j < atoms.size(); ++j)
+                {
+                    if (j == numC1)
+                    {
+                        continue;
+                    }
+
+                    double dACx = Ax - atoms[j].x; // AC의 x 길이
+                    double dACy = Ay - atoms[j].y; // AC의 y 길이
+                    double dACz = Az - atoms[j].z; // AC의 z 길이
+
+                    double dACsquare = dACx*dACx + dACy*dACy + dACz*dACz; // AC 길이 제곱
+
+                    if (dACsquare < min2)
+                    {
+                        min2 = dACsquare;
+                        numC2 = j;
+                    }
+                }
+            }
+
+            for(size_t j = 0; j < atoms.size(); ++j)
+            {
+                if (j == numC1 || j == numC2)
+                {
+                    continue;
+                }
+
+                double dACx = Ax - atoms[j].x; // AC의 x 길이
+                double dACy = Ay - atoms[j].y; // AC의 y 길이
+                double dACz = Az - atoms[j].z; // AC의 z 길이
+
+                double dACsquare = dACx*dACx + dACy*dACy + dACz*dACz; // AC 길이 제곱
+
+                if (dACsquare < min3)
+                {
+                    min3 = dACsquare;
+                    numC3 = j;
+                }
             }
         }
+        else if (modeNum == 1) // cnt 모드
+        {
+            for (size_t j = 0; j < atoms.size(); ++j)
+            {
+                if (j == numC1)
+                {
+                    continue;
+                }
+
+                double dACx = Ax - atoms[j].x; // AC의 x 길이
+                double dACy = Ay - atoms[j].y; // AC의 y 길이
+                double dACz = Az - atoms[j].z; // AC의 z 길이
+
+                double dACsquare = dACx*dACx + dACy*dACy + dACz*dACz; // AC 길이 제곱
+
+                if (dACsquare < min2)
+                {
+                    min3 = min2;
+                    numC3 = numC2;
+                    min2 = dACsquare;
+                    numC2 = j;
+                }
+                else if (dACsquare < min3)
+                {
+                    min3 = dACsquare;
+                    numC3 = j;
+                }
+            }
+        }
+
+        // // TODO 혹시 시간을 더 줄이고 싶으면 tree 같은 거 써서 검색 시스템 만들기
+        // for (size_t j = 0; j < atoms.size(); ++j)
+        // {
+        //     // A부터 C까지의 거리
+        //     // C는 임의의 원자
+        //     double dACx = Ax - atoms[j].x; // AC의 x 길이
+        //     double dACy = Ay - atoms[j].y; // AC의 y 길이
+        //     double dACz = Az - atoms[j].z; // AC의 z 길이
+
+        //     // // 주기적 경계면 특정 상황에서 반대쪽 거를 쓰는 게 더 가까움
+        //     // if (simulationBox.px)
+        //     // {
+        //     //     if (dACx > 0.5 * Lx)
+        //     //     {
+        //     //         dACx -= Lx;
+        //     //     }
+
+        //     //     if (dACx < -0.5 * Lx)
+        //     //     {
+        //     //         dACx += Lx;
+        //     //     }
+        //     // }
+        //     // if (simulationBox.py)
+        //     // {
+        //     //     if (dACy > 0.5 * Ly)
+        //     //     {
+        //     //         dACy -= Ly;
+        //     //     }
+
+        //     //     if (dACy < -0.5 * Ly)
+        //     //     {
+        //     //         dACy += Ly;
+        //     //     }
+        //     // }
+        //     // if (simulationBox.pz)
+        //     // {
+        //     //     if (dACz > 0.5 * Lz)
+        //     //     {
+        //     //         dACz -= Lz;
+        //     //     }
+
+        //     //     if (dACz < -0.5 * Lz)
+        //     //     {
+        //     //         dACz += Lz;
+        //     //     }
+        //     // }
+
+        //     double dACsquare = dACx*dACx + dACy*dACy + dACz*dACz; // AC 길이 제곱
+
+        //     // 거리에 따라 C1 C2 C3 설정
+        //     if (dACsquare < min1)
+        //     {
+        //         min3 = min2;
+        //         numC3 = numC2;
+        //         min2 = min1;
+        //         numC2 = numC1;
+        //         min1 = dACsquare;
+        //         numC1 = j;
+        //     }
+        //     else if (dACsquare < min2)
+        //     {
+        //         min3 = min2;
+        //         numC3 = numC2;
+        //         min2 = dACsquare;
+        //         numC2 = j;
+        //     }
+        //     else if (dACsquare < min3)
+        //     {
+        //         min3 = dACsquare;
+        //         numC3 = j;
+        //     }
+        // }
 
         // std::cout << "[DEBUG] min1="<<min1<<"\nmin2="<<min2<<"\nmin3="<<min3<<"\n";
 
@@ -371,11 +503,11 @@ std::vector<double> ComputeDiameters(const Box &simulationBox,
         diameters.push_back(diameter);
 
         // std::cout<<"[DEBUG] D="<<diameter<<"\n\n";
-        std::cout<<"[DEBUG] Ax="<<Ax<<"\n"<<"Ay="<<Ay<<"\n"<<"Az="<<Az<<"\n"
-            <<"min1="<<min1<<"\n"
-            <<"Dx="<<Dx<<"\n"<<"Dy="<<Dy<<"\n"<<"Dz="<<Dz<<"\n"
-            <<"dC1="<<dC1<<"\n"<<"dC2="<<dC2<<"\n"<<"dC3="<<dC3<<"\n"
-            <<"D="<<diameter<<"\n";
+        // std::cout<<"[DEBUG] Ax="<<Ax<<"\n"<<"Ay="<<Ay<<"\n"<<"Az="<<Az<<"\n"
+        //     <<"min1="<<min1<<"\n"
+        //     <<"Dx="<<Dx<<"\n"<<"Dy="<<Dy<<"\n"<<"Dz="<<Dz<<"\n"
+        //     <<"dC1="<<dC1<<"\n"<<"dC2="<<dC2<<"\n"<<"dC3="<<dC3<<"\n"
+        //     <<"D="<<diameter<<"\n";
     }
 
     return diameters;

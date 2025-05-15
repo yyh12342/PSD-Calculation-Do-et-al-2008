@@ -17,12 +17,28 @@ int main(int argc, char** argv)
     std::string mode = argv[2];
     std::string outFile = (argc >= 4 ? argv[3] : inFile + ".csv");
 
+    int modeNum;
+    if (mode == "graphite")
+    {
+        modeNum = 0;
+    }
+    else if (mode == "cnt")
+    {
+        modeNum = 1;
+    }
+    else
+    {
+        std::cerr << "모드 입력 오류\n";
+
+        return 1;
+    }
+
     Box simulationBox;
     std::vector<Atom> atoms;
 
     try
     {
-        Parse(inFile, simulationBox, atoms);
+        Parse(inFile, simulationBox, atoms, modeNum);
     }
     catch (const std::exception &e)
     {
@@ -37,24 +53,24 @@ int main(int argc, char** argv)
         * std::fabs(simulationBox.zhi - simulationBox.zlo);
 
     // 지름
-    auto diameters = ComputeDiameters(simulationBox, atoms);
+    auto diameters = ComputeDiameters(simulationBox, atoms, modeNum);
 
     // Vacc
     auto distribution = ComputeAccessibleVolume(diameters, Vbox);
 
-    // // CSV 출력
-    // try
-    // {
-    //     WriteCSV(distribution, outFile);
-    // }
-    // catch (const std::exception &e)
-    // {
-    //     std::cerr << "출력 오류: " << e.what() << "\n";
+    // CSV 출력
+    try
+    {
+        WriteCSV(distribution, outFile);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "출력 오류: " << e.what() << "\n";
 
-    //     return 1;
-    // }
+        return 1;
+    }
 
-    // std::cout << "완료. 결과를 '" << outFile << "'에 저장했습니다.\n";
+    std::cout << "완료. 결과를 '" << outFile << "'에 저장했습니다.\n";
     
     return 0;
 }
