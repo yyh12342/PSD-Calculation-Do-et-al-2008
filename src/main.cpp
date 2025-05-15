@@ -42,19 +42,19 @@ int main(int argc, char** argv)
     // Vacc
     auto distribution = ComputeAccessibleVolume(diameters, Vbox);
 
-    // CSV 출력
-    try
-    {
-        WriteCSV(distribution, outFile);
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "출력 오류: " << e.what() << "\n";
+    // // CSV 출력
+    // try
+    // {
+    //     WriteCSV(distribution, outFile);
+    // }
+    // catch (const std::exception &e)
+    // {
+    //     std::cerr << "출력 오류: " << e.what() << "\n";
 
-        return 1;
-    }
+    //     return 1;
+    // }
 
-    std::cout << "완료. 결과를 '" << outFile << "'에 저장했습니다.\n";
+    // std::cout << "완료. 결과를 '" << outFile << "'에 저장했습니다.\n";
     
     return 0;
 }

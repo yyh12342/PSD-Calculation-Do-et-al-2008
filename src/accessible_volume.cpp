@@ -14,8 +14,8 @@ static const double sigmaC = 0.3400; // 탄소 충돌 지름 σ [nm]
 
 // static const double cutoffFactor = 2.5; // mix σ 기준 컷오프
 
-static const int M = 1000000; // Monte Carlo 시도 횟수
-// static const int M = 1; // 디버그용
+// static const int M = 1000000; // Monte Carlo 시도 횟수
+static const int M = 10; // 디버그용
 static const double Dmax = 2.0; // 최대 직경 [nm]
 static const int bin = 50; // bin 개수
 
@@ -371,6 +371,11 @@ std::vector<double> ComputeDiameters(const Box &simulationBox,
         diameters.push_back(diameter);
 
         // std::cout<<"[DEBUG] D="<<diameter<<"\n\n";
+        std::cout<<"[DEBUG] Ax="<<Ax<<"\n"<<"Ay="<<Ay<<"\n"<<"Az="<<Az<<"\n"
+            <<"min1="<<min1<<"\n"
+            <<"Dx="<<Dx<<"\n"<<"Dy="<<Dy<<"\n"<<"Dz="<<Dz<<"\n"
+            <<"dC1="<<dC1<<"\n"<<"dC2="<<dC2<<"\n"<<"dC3="<<dC3<<"\n"
+            <<"D="<<diameter<<"\n";
     }
 
     return diameters;
