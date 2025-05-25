@@ -44,7 +44,6 @@ C1, C2까지의 거리가 같은 B 설정
 세번쨰로 가까운 원자 C3 찾기  
 C1, C2, C3까지의 거리가 같은 D 설정  
 (C) D에서 C1, C2, C3까지 가다가 퍼텐셜이 0인 점 찾기  
-이 중에서 가운데 값인 C2를 사용하자  
 지름 계산  
 4. M번 반복 (약 100만)  
 5. Vacc 계산  
@@ -93,23 +92,24 @@ cmake --build . --config Release
 cd ..  
 build\Release\PSDCalculator.exe inputs/dump.graphite1 graphite results/result_ex1_1.csv  
 
-(PSDCalculator.exe {input 파일 이름} {파일 형식} {csv 파일 이름})  
+(PSDCalculator.exe {input 파일명명} {파일 형식} {csv 파일명})  
 
 - 파일명  
 Ex1 : inputs/dump.graphite1  
 Ex2 : inputs/dump.cnt.armchair.r7.largebox.rlx  
 
 - 파일 형식  
-Ex1 : graphite  
-Ex2 : cnt  
+Ex1 : graphite (graphite뿐만 아니라 원자들이 한 평면에 존재하는 구조면 graphite 형식으로 적용 가능)  
+Ex2 : cnt (범용적인 구조와 계산 과정은 같지만, 점 A를 cnt 내부에 위치시키는 제약 조건 존재)  
+default : 범용적인 구조  
 
 
 
 # plotting 방법  
 
-py plot_psd.py  
+py plot_psd.py results/result_ex1_1.csv results/plots/plot_ex1_1.png  
 
-이 코드에서 입력할 csv와 png 파일명 수정 가능  
+(plot_psd.py {csv 파일명} {설정할 plot 파일명})  
 
 파이썬 버전은 3.12.7  
 

@@ -26,6 +26,10 @@ int main(int argc, char** argv)
     {
         modeNum = 1;
     }
+    else if (mode == "default")
+    {
+        modeNum = 2;
+    }
     else
     {
         std::cerr << "모드 입력 오류\n";
@@ -47,16 +51,11 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    // 박스 부피 Vbox [nm^3]
-    double Vbox = std::fabs(simulationBox.xhi - simulationBox.xlo)
-        * std::fabs(simulationBox.yhi - simulationBox.ylo)
-        * std::fabs(simulationBox.zhi - simulationBox.zlo);
-
     // 지름
     auto diameters = ComputeDiameters(simulationBox, atoms, modeNum);
 
     // Vacc
-    auto distribution = ComputeAccessibleVolume(diameters, Vbox);
+    auto distribution = ComputeAccessibleVolume(diameters, simulationBox, modeNum);
 
     // CSV 출력
     try
