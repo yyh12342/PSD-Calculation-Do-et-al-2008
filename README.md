@@ -29,28 +29,39 @@ C3: 점 A에서 세번째로 가까운 고체 원자
 
 
 
-# 알고리듬  
+# 알고리즘  
 
-1. 시뮬레이션 박스 선택  
-2. 기공 크기 범위를 선택하고 bin으로 나눔  
-3. 점 A 선택 후 퍼텐셜이 0 이하인지 확인  
-4. C1 선택  
-5. C2 선택하고 점 B 선택  
-6. C3 선택하고 점 D 선택  
-7. 벡터 C1D, C2D, C3D에서 각각 퍼텐셜이 0인 점 선택  
-8. 세 점 중에서 D까지의 거리가 가장 먼 점 선택  
-9. 이 점을 지나고 점 D를 중심으로 하는 구가 accessible volume  
+1. 시뮬레이션 박스 설정  
+텍스트(아마 LAMMPS)로 입력  
+2. 지름 분포를 bin j로 나눔  
+처음에는 모든 bin에서 Vacc가 0  
+성공 횟수 Mj를 저장  
+3. 랜덤 위치 rA로 퍼텐셜 phi(rA) 계산  
+퍼텐셜이 0 이하면 성공  
+(a) 제일 가까운 원자 C1 찾기  
+(b) 두번째로 가까운 원자 C2 찾기  
+C1, C2까지의 거리가 같은 B 설정  
+세번쨰로 가까운 원자 C3 찾기  
+C1, C2, C3까지의 거리가 같은 D 설정  
+(C) D에서 C1, C2, C3까지 가다가 퍼텐셜이 0인 점 찾기  
+지름 계산  
+4. M번 반복 (약 100만)  
+5. Vacc 계산  
+dV = Vbox / M  
+Vacc_j = Mj * dV (각 bin에 대해)  
 
 
 
 # Example  
 
-1. 이중 슬릿 기공  
-2. 탄소나노튜브  
+1. graphite 이중 슬릿 기공  
+2. cnt 탄소나노튜브  
 
 
 
 # 코드 구조  
+
+아래 코드들 이제 안 쓰고 accessible_volume만 씀  
 
 - PDBParser  
 .pdb 파일을 읽고, 원소와 좌표를 반환  
@@ -70,23 +81,35 @@ C3: 점 A에서 세번째로 가까운 고체 원자
 
 # 빌드 방법  
 
-mkdir build  
 cd build  
 cmake .. -G "Visual Studio 17 2022" -A x64  
-
 cmake --build . --config Release  
 
 
 
 # 실행 방법  
 
-- PSDCalculator  
-cd C:\Users\yooyh\Project\PSD-Calculation-Do-et-al-2008  
-build\Release\PSDCalculator.exe  
+cd ..  
+build\Release\PSDCalculator.exe inputs/dump.graphite1 graphite results/result_ex1_1.csv  
 
-- plot  
-py plot_psd.py  
-이 코드에서 csv와 png 파일명 수정 가능  
+(PSDCalculator.exe {input 파일명명} {파일 형식} {csv 파일명})  
+
+- 파일명  
+Ex1 : inputs/dump.graphite1  
+Ex2 : inputs/dump.cnt.armchair.r7.largebox.rlx  
+
+- 파일 형식  
+Ex1 : graphite (graphite뿐만 아니라 원자들이 한 평면에 존재하는 구조면 graphite 형식으로 적용 가능)  
+Ex2 : cnt (범용적인 구조와 계산 과정은 같지만, 점 A를 cnt 내부에 위치시키는 제약 조건 존재)  
+default : 범용적인 구조  
+
+
+
+# plotting 방법  
+
+py plot_psd.py results/result_ex1_1.csv results/plots/plot_ex1_1.png  
+
+(plot_psd.py {csv 파일명} {설정할 plot 파일명})  
 
 파이썬 버전은 3.12.7  
 
@@ -96,26 +119,3 @@ py plot_psd.py
 
 - 한글 깨질 때  
 vscode 실행 후, 오른쪽 하단 인코딩에서 UTF-8 with BOM  
-
-
-
-# 입력값  
-
-PSDCalculator에 넣을 테스트 입력값  
-
-1  
-0.3405  
-119.8  
-0.340  
-28.0  
-0.142  
-5 5 4  
-1.0 2.0  
-100000  
-
-2  
-0.3405  
-119.8  
-0.340  
-28.0  
-0.142  

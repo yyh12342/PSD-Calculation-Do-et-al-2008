@@ -10,10 +10,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # 실행 파일
 add_executable(PSDCalculator
     src/main.cpp
-    src/Potential.cpp
-    src/SphereFinder.cpp
-    src/Histogram.cpp)
+    # src/Potential.cpp
+    # src/SphereFinder.cpp
+    # src/Histogram.cpp
+    src/accessible_volume.h
+    src/accessible_volume.cpp)
 
-# include 디렉터리
-target_include_directories(PSDCalculator
-    PRIVATE src)
+# # include 디렉터리
+# target_include_directories(PSDCalculator
+#     PRIVATE src)
