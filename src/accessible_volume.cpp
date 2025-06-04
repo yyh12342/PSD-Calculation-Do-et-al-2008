@@ -293,15 +293,15 @@ std::vector<double> ComputeDiameters(
 
         for (size_t j = 0; j < atoms.size(); ++j)
         {
-            double dACx = Ax - atoms[j].x; // AC의 x 길이
-            double dACy = Ay - atoms[j].y; // AC의 y 길이
-            double dACz = Az - atoms[j].z; // AC의 z 길이
+            double dCAx = Ax - atoms[j].x; // AC의 x 길이
+            double dCAy = Ay - atoms[j].y; // AC의 y 길이
+            double dCAz = Az - atoms[j].z; // AC의 z 길이
 
-            double dACsquare = dACx*dACx + dACy*dACy + dACz*dACz; // AC 길이 제곱
+            double dCASquare = dCAx*dCAx + dCAy*dCAy + dCAz*dCAz; // AC 길이 제곱
 
-            if (dACsquare < min1)
+            if (dCASquare < min1)
             {
-                min1 = dACsquare;
+                min1 = dCASquare;
                 numC1 = j;
             }
         }
@@ -331,15 +331,15 @@ std::vector<double> ComputeDiameters(
                     continue;
                 }
 
-                double dACx = Ax - atoms[j].x; // AC의 x 길이
-                double dACy = Ay - atoms[j].y; // AC의 y 길이
-                double dACz = Az - atoms[j].z; // AC의 z 길이
+                double dCAx = Ax - atoms[j].x; // AC의 x 길이
+                double dCAy = Ay - atoms[j].y; // AC의 y 길이
+                double dCAz = Az - atoms[j].z; // AC의 z 길이
 
-                double dACsquare = dACx*dACx + dACy*dACy + dACz*dACz; // AC 길이 제곱
+                double dCASquare = dCAx*dCAx + dCAy*dCAy + dCAz*dCAz; // AC 길이 제곱
 
-                if (dACsquare < min2)
+                if (dCASquare < min2)
                 {
-                    min2 = dACsquare;
+                    min2 = dCASquare;
                     numC2 = j;
                 }
             }
@@ -353,15 +353,15 @@ std::vector<double> ComputeDiameters(
                         continue;
                     }
 
-                    double dACx = Ax - atoms[j].x; // AC의 x 길이
-                    double dACy = Ay - atoms[j].y; // AC의 y 길이
-                    double dACz = Az - atoms[j].z; // AC의 z 길이
+                    double dCAx = Ax - atoms[j].x; // AC의 x 길이
+                    double dCAy = Ay - atoms[j].y; // AC의 y 길이
+                    double dCAz = Az - atoms[j].z; // AC의 z 길이
 
-                    double dACsquare = dACx*dACx + dACy*dACy + dACz*dACz; // AC 길이 제곱
+                    double dCASquare = dCAx*dCAx + dCAy*dCAy + dCAz*dCAz; // AC 길이 제곱
 
-                    if (dACsquare < min2)
+                    if (dCASquare < min2)
                     {
-                        min2 = dACsquare;
+                        min2 = dCASquare;
                         numC2 = j;
                     }
                 }
@@ -374,15 +374,15 @@ std::vector<double> ComputeDiameters(
                     continue;
                 }
 
-                double dACx = Ax - atoms[j].x; // AC의 x 길이
-                double dACy = Ay - atoms[j].y; // AC의 y 길이
-                double dACz = Az - atoms[j].z; // AC의 z 길이
+                double dCAx = Ax - atoms[j].x; // AC의 x 길이
+                double dCAy = Ay - atoms[j].y; // AC의 y 길이
+                double dCAz = Az - atoms[j].z; // AC의 z 길이
 
-                double dACsquare = dACx*dACx + dACy*dACy + dACz*dACz; // AC 길이 제곱
+                double dCASquare = dCAx*dCAx + dCAy*dCAy + dCAz*dCAz; // AC 길이 제곱
 
-                if (dACsquare < min3)
+                if (dCASquare < min3)
                 {
-                    min3 = dACsquare;
+                    min3 = dCASquare;
                     numC3 = j;
                 }
             }
@@ -396,22 +396,22 @@ std::vector<double> ComputeDiameters(
                     continue;
                 }
 
-                double dACx = Ax - atoms[j].x; // AC의 x 길이
-                double dACy = Ay - atoms[j].y; // AC의 y 길이
-                double dACz = Az - atoms[j].z; // AC의 z 길이
+                double dCAx = Ax - atoms[j].x; // AC의 x 길이
+                double dCAy = Ay - atoms[j].y; // AC의 y 길이
+                double dCAz = Az - atoms[j].z; // AC의 z 길이
 
-                double dACsquare = dACx*dACx + dACy*dACy + dACz*dACz; // AC 길이 제곱
+                double dCASquare = dCAx*dCAx + dCAy*dCAy + dCAz*dCAz; // AC 길이 제곱
 
-                if (dACsquare < min2)
+                if (dCASquare < min2)
                 {
                     min3 = min2;
                     numC3 = numC2;
-                    min2 = dACsquare;
+                    min2 = dCASquare;
                     numC2 = j;
                 }
-                else if (dACsquare < min3)
+                else if (dCASquare < min3)
                 {
-                    min3 = dACsquare;
+                    min3 = dCASquare;
                     numC3 = j;
                 }
             }
@@ -422,58 +422,61 @@ std::vector<double> ComputeDiameters(
         const Atom &C2 = atoms[numC2];
         const Atom &C3 = atoms[numC3];
 
-        double dAC1x = Ax - C1.x; // AC1의 x 길이
-        double dAC1y = Ay - C1.y; // AC1의 ㅛ 길이
-        double dAC1z = Az - C1.z; // AC1의 z 길이
-        double dAC2x = Ax - C2.x; // AC2의 x 길이
-        double dAC2y = Ay - C2.y; // AC2의 ㅛ 길이
-        double dAC2z = Az - C2.z; // AC2의 z 길이
+        double dC1Ax = Ax - C1.x; // AC1의 x 길이
+        double dC1Ay = Ay - C1.y; // AC1의 ㅛ 길이
+        double dC1Az = Az - C1.z; // AC1의 z 길이
+        double dC2Ax = Ax - C2.x; // AC2의 x 길이
+        double dC2Ay = Ay - C2.y; // AC2의 ㅛ 길이
+        double dC2Az = Az - C2.z; // AC2의 z 길이
+        double dC1C2x = C2.x - C1.x;
+        double dC1C2y = C2.y - C1.y;
+        double dC1C2z = C2.z - C1.z;
 
-        double dot12 = dAC1x*dAC2x + dAC1y*dAC2y + dAC1z*dAC2z;
-        if (fabs(dot12) < 1e-12) // A가 수직 위에 있는 경우 점 B가 존재하지 못함
+        double dC1ASquare = dC1Ax*dC1Ax + dC1Ay*dC1Ay + dC1Az*dC1Az;
+        double dC2ASquare = dC2Ax*dC2Ax + dC2Ay*dC2Ay + dC2Az*dC2Az;
+
+        double denom1 = dC1C2x*dC1Ax + dC1C2y*dC1Ay + dC1C2z*dC1Az;
+        if (fabs(denom1) < 1e-12) // A가 수직 위에 있는 경우 점 B가 존재하지 못함
         {
             continue;
         }
 
-        double lam1 = 0.0;
-        double denom1 = (min1 - dot12);
-        if (denom1 > 0)
-        {
-            lam1 = (min2 - min1) / (2.0 * denom1); // 양수
-        }
+        double lam1 = (dC2ASquare - dC1ASquare) / (2 * denom1);
 
         // B 계산
-        double Bx = Ax + lam1 * dAC1x; // B의 x 성분
-        double By = Ay + lam1 * dAC1y; // B의 y 성분
-        double Bz = Az + lam1 * dAC1z; // B의 z 성분
+        double Bx = Ax + lam1 * dC1Ax; // B의 x 성분
+        double By = Ay + lam1 * dC1Ay; // B의 y 성분
+        double Bz = Az + lam1 * dC1Az; // B의 z 성분
 
         // rCB 벡터
-        double dBC1x = Bx - C1.x; // BC1의 x 길이
-        double dBC1y = By - C1.y; // BC1의 y 길이
-        double dBC1z = Bz - C1.z; // BC1의 z 길이
-        double dBC2x = Bx - C2.x; // BC2의 x 길이
-        double dBC2y = By - C2.y; // BC2의 y 길이
-        double dBC2z = Bz - C2.z; // BC2의 z 길이
-        double dBC3x = Bx - C3.x; // BC3의 x 길이
-        double dBC3y = By - C3.y; // BC3의 y 길이
-        double dBC3z = Bz - C3.z; // BC3의 z 길이
+        double dC1Bx = Bx - C1.x; // BC1의 x 길이
+        double dC1By = By - C1.y; // BC1의 y 길이
+        double dC1Bz = Bz - C1.z; // BC1의 z 길이
+        double dC2Bx = Bx - C2.x; // BC2의 x 길이
+        double dC2By = By - C2.y; // BC2의 y 길이
+        double dC2Bz = Bz - C2.z; // BC2의 z 길이
+        double dC3Bx = Bx - C3.x; // BC3의 x 길이
+        double dC3By = By - C3.y; // BC3의 y 길이
+        double dC3Bz = Bz - C3.z; // BC3의 z 길이
+        double dC1C3x = C3.x - C1.x;
+        double dC1C3y = C3.y - C1.y;
+        double dC1C3z = C3.z - C1.z;
 
-        double dBC1pBC2x = dBC1x + dBC2x; // BC1 x 길이 + BC2 x 길이
-        double dBC1pBC2y = dBC1y + dBC2y; // BC1 y 길이 + BC2 y 길이
-        double dBC1pBC2z = dBC1z + dBC2z; // BC1 z 길이 + BC2 z 길이
+        double dC1BSquare = dC1Bx * dC1Bx + dC1By * dC1By + dC1Bz * dC1Bz; // BC1 길이 제곱
+        double dC3BSquare = dC3Bx * dC3Bx + dC3By * dC3By + dC3Bz * dC3Bz; // BC3 길이 제곱
 
-        double dBC1Square = dBC1x * dBC1x + dBC1y * dBC1y + dBC1z * dBC1z; // BC1 길이 제곱
-        double dBC3Square = dBC3x * dBC3x + dBC3y * dBC3y + dBC3z * dBC3z; // BC3 길이 제곱
+        double denom2 = dC1C3x*(dC1Bx+dC2Bx) + dC1C3y*(dC1By+dC2By) + dC1C3z*(dC1Bz+dC2Bz);
+        if (fabs(denom2) < 1e-12)
+        {
+            continue;
+        }
 
-        double dot1p = dBC1x * dBC1pBC2x + dBC1y * dBC1pBC2y + dBC1z * dBC1pBC2z;
-        double dot3p = dBC3x * dBC1pBC2x + dBC3y * dBC1pBC2y + dBC3z * dBC1pBC2z;
-        
-        double lam2 = (dBC3Square - dBC1Square) / (2.0 * (dot1p - dot3p)); // 양수가 아니어도 됨
+        double lam2 = (dC3BSquare - dC1BSquare) / (2 * denom2);
         
         // D 계산
-        double Dx = Bx + lam2 * dBC1pBC2x; // D의 x 성분
-        double Dy = By + lam2 * dBC1pBC2y; // D의 y 성분
-        double Dz = Bz + lam2 * dBC1pBC2z; // D의 z 성분
+        double Dx = Bx + lam2 * (dC1Bx+dC2Bx); // D의 x 성분
+        double Dy = By + lam2 * (dC1By+dC2By); // D의 y 성분
+        double Dz = Bz + lam2 * (dC1Bz+dC2Bz); // D의 z 성분
 
         auto dist = [&](const Atom &C){
             double vx = Dx - C.x;
@@ -486,7 +489,7 @@ std::vector<double> ComputeDiameters(
         double dC2 = dist(C2);
         double dC3 = dist(C3);
 
-        double radius = std::min({ dC1, dC2, dC3}) - sigma_mix; // 반경 radius
+        double radius = std::min({dC1, dC2, dC3}) - sigma_mix; // 반경 radius
 
         if (radius > 0)
         {
@@ -504,7 +507,7 @@ std::vector<double> ComputeDiameters(
         ++accepted;
     }
 
-    std::cout<<"[DEBUG] accepted="<<accepted<<"\n\n";
+    // std::cout<<"[DEBUG] accepted="<<accepted<<"\n\n";
 
     return diameters;
 }
@@ -575,7 +578,7 @@ void WriteCSV(
         throw std::runtime_error("출력 파일을 열 수 없습니다.");
     }
 
-    ofs << "diameter(nm), accessible volume(nm3)\n";
+    ofs << "diameter(nm), reduced accessible volume\n";
     ofs << std::fixed;
     ofs.precision(6);
 

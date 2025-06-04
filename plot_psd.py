@@ -19,8 +19,8 @@ def main():
 
     df.columns = [col.strip() for col in df.columns]
 
-    total = df['accessible volume(nm3)'].sum()
-    df['AccessibleVolume'] = df['accessible volume(nm3)'] / total
+    total = df['reduced accessible volume'].sum()
+    df['RecuedAccessibleVolume'] = df['reduced accessible volume'] / total
 
     out_dir = os.path.dirname(args.output_png)
     if out_dir:
@@ -28,9 +28,9 @@ def main():
 
     # 그래프
     plt.figure()
-    plt.plot(df['diameter(nm)'], df['AccessibleVolume'], '-o')
+    plt.plot(df['diameter(nm)'], df['RecuedAccessibleVolume'], '-o')
     plt.xlabel('Diameter (nm)')
-    plt.ylabel('Accessible Volume')
+    plt.ylabel('Recued Accessible Volume')
     plt.title('Pore Size Distribution')
     plt.grid(True)
     plt.tight_layout()
