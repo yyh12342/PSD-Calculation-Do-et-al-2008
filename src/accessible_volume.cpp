@@ -11,6 +11,8 @@
 
 static const double sigmaAr = 0.3405; // 아르곤 충돌 지름 σ [nm]
 static const double sigmaC = 0.3400; // 탄소 충돌 지름 σ [nm]
+double sigmaMix = 0.5 * (sigmaAr + sigmaC); // 혼합 파라미터
+double sigmaMixSquare = sigmaMix * sigmaMix;
 
 static const int M = 1000000; // Monte Carlo 시도 횟수
 // static const int M = 10; // 디버깅용 Monte Carlo 시도 횟수
@@ -22,7 +24,43 @@ int hAxis = 0; // cnt 높이 축
 int rAxis1 = 0; // cnt 지름 축 1
 int rAxis2 = 0; // cnt 지름 축 2
 double center[3]; // cnt 중심
-double rSquare = 0.0; // cnt 반경 제곱
+double rSquare = 0; // cnt 반경 제곱
+
+
+
+static inline double PotentialAtPoint(
+    double px, double py, double pz,
+    const std::vector<Atom> &atoms)
+{
+    double phi = 0;
+
+    for (auto &C : atoms)
+    {
+        double dx = px - C.x;
+        double dy = py - C.y;
+        double dz = pz - C.z;
+        double r2 = dx*dx + dy*dy + dz*dz;
+
+        if (r2 <= sigmaMixSquare / 4) // 충돌거리 절반보다 가까우면 바로 탈출
+        {
+            return 1e6;
+        }
+
+        double inv_r2 = sigmaMixSquare / r2;
+        double inv_r6 = inv_r2 * inv_r2 * inv_r2;
+
+        // 입실론은 항상 같으니까 1로 두기
+        phi += (inv_r6 * inv_r6 - inv_r6);
+
+        // 퍼텐셜이 양수면 조기 탈출
+        if (phi > 0)
+        {
+            return phi;
+        }
+    }
+
+    return phi; // φ ≤ 0 이면 삽입 가능
+}
 
 void Parse(
     const std::string &filename, // 구조 입력 파일
@@ -248,12 +286,10 @@ std::vector<double> ComputeDiameters(
         }
     }
 
-    std::mt19937_64 gen{std::random_device{}()}; // 몬테카를로
+    std::mt19937_64 gen{ std::random_device{}() }; // 몬테카를로
     std::uniform_real_distribution<double> randX(simulationBox.xlo, simulationBox.xhi);
     std::uniform_real_distribution<double> randY(simulationBox.ylo, simulationBox.yhi);
     std::uniform_real_distribution<double> randZ(simulationBox.zlo, simulationBox.zhi);
-
-    double sigma_mix = 0.5*(sigmaAr + sigmaC); // 혼합 파라미터
 
     const double ztol = 0.1; // graphite 모드일 때 그래핀 층 구분
     int accepted = 0; // A가 다공성 재료 내부에 삽입된 횟수
@@ -265,11 +301,11 @@ std::vector<double> ComputeDiameters(
         double Ay = randY(gen); // A의 y 성분
         double Az = randZ(gen); // A의 z 성분
 
-        // cnt 내부 삽입 여부 체크
-        double coords[3] = { Ax, Ay, Az };
-
         if (modeNum == 1)
         {
+            // cnt 내부 삽입 여부 체크
+            double coords[3] = { Ax, Ay, Az };
+
             double dr1 = coords[rAxis1] - center[rAxis1];
             double dr2 = coords[rAxis2] - center[rAxis2];
 
@@ -280,6 +316,14 @@ std::vector<double> ComputeDiameters(
 
             // std::cout<<"[DEBUG] dr1*dr1 + dr2*dr2="<<dr1*dr1 + dr2*dr2<<"\n"<<
             //     "rSquare="<<rSquare<<"\n\n";
+        }
+
+        double phiA = PotentialAtPoint(Ax, Ay, Az, atoms);
+
+        if (phiA > 0)
+        {
+            ++accepted;
+            continue;
         }
 
         // C1 C2 C3 찾기 및 퍼텐셜 체크
@@ -306,16 +350,16 @@ std::vector<double> ComputeDiameters(
             }
         }
 
-        // min1을 통해 성공 여부 결정
-        if (min1 < sigma_mix * sigma_mix) // 퍼텐셜이 0 이상이면 실패
-        {
-            ++accepted;
+        // // min1을 통해 성공 여부 결정
+        // if (min1 < sigmaMixSquare) // 퍼텐셜이 0 이상이면 실패
+        // {
+        //     ++accepted;
 
-            // std::cout<<"[DEBUG] min1="<<min1<<"\n"<<
-            //     "sigma_mix * sigma_mix="<<sigma_mix * sigma_mix<<"\n\n";
+        //     // std::cout<<"[DEBUG] min1="<<min1<<"\n"<<
+        //     //     "sigmaMixSquare="<<sigmaMixSquare<<"\n\n";
 
-            continue;
-        }
+        //     continue;
+        // }
 
         if (modeNum == 0) // graphite 모드
         {
@@ -478,30 +522,70 @@ std::vector<double> ComputeDiameters(
         double Dy = By + lam2 * (dC1By+dC2By); // D의 y 성분
         double Dz = Bz + lam2 * (dC1Bz+dC2Bz); // D의 z 성분
 
-        auto dist = [&](const Atom &C){
-            double vx = Dx - C.x;
-            double vy = Dy - C.y;
-            double vz = Dz - C.z;
-            return std::sqrt(vx*vx + vy*vy + vz*vz);
-        };
+        // auto dist = [&](const Atom &C){
+        //     double vx = Dx - C.x;
+        //     double vy = Dy - C.y;
+        //     double vz = Dz - C.z;
+        //     return std::sqrt(vx*vx + vy*vy + vz*vz);
+        // };
 
-        double dC1 = dist(C1);
-        double dC2 = dist(C2);
-        double dC3 = dist(C3);
+        // double dC1 = dist(C1);
+        // double dC2 = dist(C2);
+        // double dC3 = dist(C3);
 
-        double radius = std::min({dC1, dC2, dC3}) - sigma_mix; // 반경 radius
+        // double radius = std::min({dC1, dC2, dC3}) - sigmaMix; // 반경 radius
 
+        double dDC1x = C1.x - Dx;
+        double dDC1y = C1.y - Dy;
+        double dDC1z = C1.z - Dz;
+        double dDC1 = std::sqrt(dDC1x*dDC1x + dDC1y*dDC1y + dDC1z*dDC1z);
+
+        double ux = dDC1x / dDC1;
+        double uy = dDC1y / dDC1;
+        double uz = dDC1z / dDC1;
+
+        // 이분법으로 반복해서 퍼텐셜이 0인 지점 찾기
+        double t_low  = 0;
+        double t_high = dDC1;
+        
+        for (int k = 0; k < 30; ++k)
+        {
+            double t_mid = 0.5 * (t_low + t_high);
+
+            double Px = Dx + t_mid * ux;
+            double Py = Dy + t_mid * uy;
+            double Pz = Dz + t_mid * uz;
+
+            double phiP = PotentialAtPoint(Px, Py, Pz, atoms);
+            if (phiP <= 0.0)
+            {
+                t_low = t_mid; 
+            }
+            else
+            {
+                t_high = t_mid;
+            }
+        }
+
+        // if (radius > 0)
+        // {
+        //     double diameter = 2.0 * radius; // 지름 diameter
+
+        //     diameters.push_back(diameter);
+
+        //     // std::cout<<"[DEBUG] Ax="<<Ax<<"\n"<<"Ay="<<Ay<<"\n"<<"Az="<<Az<<"\n"
+        //     //     <<"min1="<<min1<<"\n"
+        //     //     <<"Dx="<<Dx<<"\n"<<"Dy="<<Dy<<"\n"<<"Dz="<<Dz<<"\n"
+        //     //     <<"dC1="<<dC1<<"\n"<<"dC2="<<dC2<<"\n"<<"dC3="<<dC3<<"\n"
+        //     //     <<"D="<<diameter<<"\n\n";
+        // }
+
+        double radius = t_low;
         if (radius > 0)
         {
-            double diameter = 2.0 * radius; // 지름 diameter
-
+            double diameter = 2.0 * radius;
+            
             diameters.push_back(diameter);
-
-            // std::cout<<"[DEBUG] Ax="<<Ax<<"\n"<<"Ay="<<Ay<<"\n"<<"Az="<<Az<<"\n"
-            //     <<"min1="<<min1<<"\n"
-            //     <<"Dx="<<Dx<<"\n"<<"Dy="<<Dy<<"\n"<<"Dz="<<Dz<<"\n"
-            //     <<"dC1="<<dC1<<"\n"<<"dC2="<<dC2<<"\n"<<"dC3="<<dC3<<"\n"
-            //     <<"D="<<diameter<<"\n\n";
         }
 
         ++accepted;

@@ -27,6 +27,12 @@ struct Box
     bool pz; // z축의 주기적 경계 flag
 };
 
+
+
+static inline double PotentialAtPoint(
+    double px, double py, double pz,
+    const std::vector<Atom> &atoms);
+
 // 입력 파일 파싱
 void Parse(
     const std::string &filename,
