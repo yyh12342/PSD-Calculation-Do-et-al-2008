@@ -8,18 +8,15 @@
 #include <cmath>
 #include <random>
 #include <algorithm>
+#include <unordered_map>
 
 static const double sigmaAr = 0.3405; // 아르곤 충돌 지름 σ [nm]
-static const double sigmaC = 0.3400; // 탄소 충돌 지름 σ [nm]
-double sigmaMix = 0.5 * (sigmaAr + sigmaC); // 혼합 파라미터
-double sigmaMixSquare = sigmaMix * sigmaMix;
 
 static const int M = 1000000; // Monte Carlo 시도 횟수
-// static const int M = 10; // 디버깅용 Monte Carlo 시도 횟수
-static const double Dmax = 2.0; // 지름 분포 최대 직경 [nm]
-static const int bin = 50; // bin 개수
+// static const int M = 10; // [DEBUG] Monte Carlo 시도 횟수
+static const double Dmax = 4.0; // 지름 분포 최대 직경 [nm]
+static const int bin = 100; // bin 개수
 
-// cnt 모드일 때 사용
 int hAxis = 0; // cnt 높이 축
 int rAxis1 = 0; // cnt 지름 축 1
 int rAxis2 = 0; // cnt 지름 축 2
@@ -30,7 +27,8 @@ double rSquare = 0; // cnt 반경 제곱
 
 static inline double PotentialAtPoint(
     double px, double py, double pz,
-    const std::vector<Atom> &atoms)
+    const std::vector<Atom> &atoms,
+    const std::unordered_map<int,double> &sigmaMap)
 {
     double phi = 0;
 
@@ -41,12 +39,12 @@ static inline double PotentialAtPoint(
         double dz = pz - C.z;
         double r2 = dx*dx + dy*dy + dz*dz;
 
-        if (r2 <= sigmaMixSquare / 4) // 충돌거리 절반보다 가까우면 바로 탈출
+        if (r2 <= C.sigmaMixSquare / 4) // 충돌거리 절반보다 가까우면 바로 탈출
         {
             return 1e6;
         }
 
-        double inv_r2 = sigmaMixSquare / r2;
+        double inv_r2 = C.sigmaMixSquare / r2;
         double inv_r6 = inv_r2 * inv_r2 * inv_r2;
 
         // 입실론은 항상 같으니까 1로 두기
@@ -62,11 +60,14 @@ static inline double PotentialAtPoint(
     return phi; // φ ≤ 0 이면 삽입 가능
 }
 
+
+
 void Parse(
     const std::string &filename, // 구조 입력 파일
     Box &simulationBox, // 시뮬레이션 박스
     std::vector<Atom> &atoms,
-    int modeNum) // 각 원자
+    int modeNum,
+    const std::unordered_map<int,double> &sigmaMap) // 각 원자
 {
     std::ifstream infile(filename); // 구조 입력 파일
     if (!infile.is_open())
@@ -108,20 +109,21 @@ void Parse(
     }
 
     // BOX BOUNDS
-    // 범용적인 구조가 graphite일 때와 같은 BOX BOUNDS 형식을 가진다고 가정
+    // 범용적인 구조가 cnt일 때와 같은 BOX BOUNDS 형식을 가진다고 가정
     // TODO 만약 그렇지 않다면 수정 필요
-    if (modeNum == 1)
-    {
-        infile >> simulationBox.xlo >> simulationBox.xhi;
-        infile >> simulationBox.ylo >> simulationBox.yhi;
-        infile >> simulationBox.zlo >> simulationBox.zhi;
-    }
-    else // graphite 모드, 범용적인 구조
+    if (modeNum == 0)
     {
         double tmp; // 버리는 값
         infile >> simulationBox.xlo >> simulationBox.xhi >> tmp;
         infile >> simulationBox.ylo >> simulationBox.yhi >> tmp;
         infile >> simulationBox.zlo >> simulationBox.zhi >> tmp;
+    }
+    else // cnt 모드, 범용적인 구조
+    {
+        
+        infile >> simulationBox.xlo >> simulationBox.xhi;
+        infile >> simulationBox.ylo >> simulationBox.yhi;
+        infile >> simulationBox.zlo >> simulationBox.zhi;
     }
 
     // 옹스트롬 변환
@@ -191,9 +193,12 @@ void Parse(
             throw std::runtime_error("atom line 형식 오류");
         }
 
-        double xs = std::stod(col[col.size()-3]);
-        double ys = std::stod(col[col.size()-2]);
-        double zs = std::stod(col[col.size()-1]);
+        // TODO 임시로 각각 1, 2, 3, 4로 해둠
+        // 추후 문제 생길 시 수정하자
+        int type = std::stoi(col[1]);
+        double xs = std::stod(col[2]);
+        double ys = std::stod(col[3]);
+        double zs = std::stod(col[4]);
 
         // 입력 파일에서 xs ys zs면 scaled, x y z면 real 좌표임
         if (scaled)
@@ -203,7 +208,11 @@ void Parse(
             zs = simulationBox.zlo + zs*(simulationBox.zhi - simulationBox.zlo);
         }
 
-        atoms.push_back({ xs,ys,zs });
+        double sigmaSolid = sigmaMap.at(type);
+        double sigmaMix = 0.5 * (sigmaAr + sigmaSolid);
+        double sigmaMixSquare = sigmaMix * sigmaMix;
+
+        atoms.push_back({ type, xs, ys, zs, sigmaMix, sigmaMixSquare });
     }
 
     infile.close();
@@ -212,7 +221,8 @@ void Parse(
 std::vector<double> ComputeDiameters(
     const Box &simulationBox,
     const std::vector<Atom> &atoms,
-    int modeNum)
+    int modeNum,
+    const std::unordered_map<int,double> &sigmaMap)
 {
     std::vector<double> diameters;
     diameters.reserve(M);
@@ -318,7 +328,7 @@ std::vector<double> ComputeDiameters(
             //     "rSquare="<<rSquare<<"\n\n";
         }
 
-        double phiA = PotentialAtPoint(Ax, Ay, Az, atoms);
+        double phiA = PotentialAtPoint(Ax, Ay, Az, atoms, sigmaMap);
 
         if (phiA > 0)
         {
@@ -349,17 +359,6 @@ std::vector<double> ComputeDiameters(
                 numC1 = j;
             }
         }
-
-        // // min1을 통해 성공 여부 결정
-        // if (min1 < sigmaMixSquare) // 퍼텐셜이 0 이상이면 실패
-        // {
-        //     ++accepted;
-
-        //     // std::cout<<"[DEBUG] min1="<<min1<<"\n"<<
-        //     //     "sigmaMixSquare="<<sigmaMixSquare<<"\n\n";
-
-        //     continue;
-        // }
 
         if (modeNum == 0) // graphite 모드
         {
@@ -522,19 +521,6 @@ std::vector<double> ComputeDiameters(
         double Dy = By + lam2 * (dC1By+dC2By); // D의 y 성분
         double Dz = Bz + lam2 * (dC1Bz+dC2Bz); // D의 z 성분
 
-        // auto dist = [&](const Atom &C){
-        //     double vx = Dx - C.x;
-        //     double vy = Dy - C.y;
-        //     double vz = Dz - C.z;
-        //     return std::sqrt(vx*vx + vy*vy + vz*vz);
-        // };
-
-        // double dC1 = dist(C1);
-        // double dC2 = dist(C2);
-        // double dC3 = dist(C3);
-
-        // double radius = std::min({dC1, dC2, dC3}) - sigmaMix; // 반경 radius
-
         double dDC1x = C1.x - Dx;
         double dDC1y = C1.y - Dy;
         double dDC1z = C1.z - Dz;
@@ -546,18 +532,18 @@ std::vector<double> ComputeDiameters(
 
         // 이분법으로 반복해서 퍼텐셜이 0인 지점 찾기
         double t_low  = 0;
-        double t_high = dDC1;
+        double t_high = C1.sigmaMix;
         
-        for (int k = 0; k < 30; ++k)
+        for (int k = 0; k < 10; ++k)
         {
             double t_mid = 0.5 * (t_low + t_high);
 
-            double Px = Dx + t_mid * ux;
-            double Py = Dy + t_mid * uy;
-            double Pz = Dz + t_mid * uz;
+            double Px = C1.x + t_mid * ux;
+            double Py = C1.y + t_mid * uy;
+            double Pz = C1.z + t_mid * uz;
 
-            double phiP = PotentialAtPoint(Px, Py, Pz, atoms);
-            if (phiP <= 0.0)
+            double phiP = PotentialAtPoint(Px, Py, Pz, atoms, sigmaMap);
+            if (phiP >= 0)
             {
                 t_low = t_mid; 
             }
@@ -567,20 +553,7 @@ std::vector<double> ComputeDiameters(
             }
         }
 
-        // if (radius > 0)
-        // {
-        //     double diameter = 2.0 * radius; // 지름 diameter
-
-        //     diameters.push_back(diameter);
-
-        //     // std::cout<<"[DEBUG] Ax="<<Ax<<"\n"<<"Ay="<<Ay<<"\n"<<"Az="<<Az<<"\n"
-        //     //     <<"min1="<<min1<<"\n"
-        //     //     <<"Dx="<<Dx<<"\n"<<"Dy="<<Dy<<"\n"<<"Dz="<<Dz<<"\n"
-        //     //     <<"dC1="<<dC1<<"\n"<<"dC2="<<dC2<<"\n"<<"dC3="<<dC3<<"\n"
-        //     //     <<"D="<<diameter<<"\n\n";
-        // }
-
-        double radius = t_low;
+        double radius = dDC1 - 0.5 * (t_low + t_high);
         if (radius > 0)
         {
             double diameter = 2.0 * radius;
@@ -589,9 +562,9 @@ std::vector<double> ComputeDiameters(
         }
 
         ++accepted;
-    }
 
-    // std::cout<<"[DEBUG] accepted="<<accepted<<"\n\n";
+        // std::cout<<"[DEBUG] accepted="<<accepted<<"\n";
+    }
 
     return diameters;
 }
@@ -601,25 +574,29 @@ std::vector<std::pair<double,double>> ComputeAccessibleVolume(
     const Box &simulationBox,
     int modeNum)
 {
-    double Vbox;
+    // 논문과 같은 플롯을 생성하기 위해 reduced accessible volume을 사용해서, Vbox를 쓰지 않음
+    // 설명은 없지만, 논문의 플롯을 분석해보면 전체를 1로 놓은 scaled 값임을 알 수 있다.
+    // TODO 실제 부피에 대한 결과를 얻으려면, 아래 내용을 포함해야 함
+    
+    // double Vbox;
 
-    if (modeNum == 1) // cnt
-    {
-        double dx = simulationBox.xhi - simulationBox.xlo;
-        double dy = simulationBox.yhi - simulationBox.ylo;
-        double dz = simulationBox.zhi - simulationBox.zlo;
+    // if (modeNum == 1) // cnt
+    // {
+    //     double dx = simulationBox.xhi - simulationBox.xlo;
+    //     double dy = simulationBox.yhi - simulationBox.ylo;
+    //     double dz = simulationBox.zhi - simulationBox.zlo;
 
-        double radius = std::sqrt(rSquare);
-        double height = (hAxis == 0 ? dx : (hAxis == 1 ? dy : dz));
+    //     double radius = std::sqrt(rSquare);
+    //     double height = (hAxis == 0 ? dx : (hAxis == 1 ? dy : dz));
 
-        Vbox = M_PI * radius * radius * height;
-    }
-    else // graphite와 범용적인 구조
-    {
-        Vbox = std::fabs(simulationBox.xhi - simulationBox.xlo)
-            * std::fabs(simulationBox.yhi - simulationBox.ylo)
-            * std::fabs(simulationBox.zhi - simulationBox.zlo);
-    }
+    //     Vbox = M_PI * radius * radius * height;
+    // }
+    // else // graphite와 범용적인 구조
+    // {
+    //     Vbox = std::fabs(simulationBox.xhi - simulationBox.xlo)
+    //         * std::fabs(simulationBox.yhi - simulationBox.ylo)
+    //         * std::fabs(simulationBox.zhi - simulationBox.zlo);
+    // }
     
     std::vector<int> Mj(bin, 0);
 

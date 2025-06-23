@@ -19,8 +19,9 @@ def main():
 
     df.columns = [col.strip() for col in df.columns]
 
-    total = df['reduced accessible volume'].sum()
-    df['RecuedAccessibleVolume'] = df['reduced accessible volume'] / total
+    # total = df['reduced accessible volume'].sum()
+    # df['RecuedAccessibleVolume'] = df['reduced accessible volume'] / total
+    df['RecuedAccessibleVolume'] = df['reduced accessible volume']
 
     out_dir = os.path.dirname(args.output_png)
     if out_dir:
@@ -31,7 +32,7 @@ def main():
     plt.plot(df['diameter(nm)'], df['RecuedAccessibleVolume'], '-o')
     plt.xlabel('Diameter (nm)')
     plt.ylabel('Recued Accessible Volume')
-    plt.title('Pore Size Distribution')
+    plt.title('Graphite Pore Size Distribution')
     plt.grid(True)
     plt.tight_layout()
 
