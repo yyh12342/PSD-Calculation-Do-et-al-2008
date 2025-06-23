@@ -61,21 +61,9 @@ Vacc_j = Mj * dV (각 bin에 대해)
 
 # 코드 구조  
 
-아래 코드들 이제 안 쓰고 accessible_volume만 씀  
-
-- PDBParser  
-.pdb 파일을 읽고, 원소와 좌표를 반환  
-처음엔 범용적으로 사용할 수 있도록 코드를 설계했는데, 생각해보니 Example 1과 2의 환경이 평행한 이중 슬릿과 탄소나노튜브로 상이함  
-따라서 특정 상황에서 적용할 수 있도록 코드를 단순화하였고, 이에 따라 PDBParser는 당분간 사용하지 않음  
-
-- Potnetial  
-파라미터, 퍼텐셜 계산  
-
-- SphereFinder  
-세 좌표를 통해 기공 반경 계산  
-
-- Histogram  
-각 지름 bin 별로 volume 저장  
+- accessible_volume  
+- main  
+- plot_psd : 플롯 생성  
 
 
 
@@ -90,18 +78,25 @@ cmake --build . --config Release
 # 실행 방법  
 
 cd ..  
-build\Release\PSDCalculator.exe inputs/dump.graphite1 graphite results/result_ex1_1.csv  
+build\Release\PSDCalculator.exe inputs/dump.graphite1 graphite results/result_ex1_1.csv 1:0.3400  
 
-(PSDCalculator.exe {input 파일명명} {파일 형식} {csv 파일명})  
+- 입력 형식  
+{input 파일명} {파일 형식} {csv 파일명} {type:sigma} {type:sigma} ...  
 
 - 파일명  
 Ex1 : inputs/dump.graphite1  
 Ex2 : inputs/dump.cnt.armchair.r7.largebox.rlx  
+SiO2 : inputs/dump.demixing_equil.100000  
 
 - 파일 형식  
 Ex1 : graphite (graphite뿐만 아니라 원자들이 한 평면에 존재하는 구조면 graphite 형식으로 적용 가능)  
 Ex2 : cnt (범용적인 구조와 계산 과정은 같지만, 점 A를 cnt 내부에 위치시키는 제약 조건 존재)  
 default : 범용적인 구조  
+
+- 시그마 값  
+C : 0.3400  
+Si : 0.4200  
+O : 0.3000  
 
 
 
@@ -109,9 +104,10 @@ default : 범용적인 구조
 
 py plot_psd.py results/result_ex1_1.csv results/plots/plot_ex1_1.png  
 
-(plot_psd.py {csv 파일명} {설정할 plot 파일명})  
+- 입력 형식  
+plot_psd.py {csv 파일명} {설정할 plot 파일명}  
 
-파이썬 버전은 3.12.7  
+파이썬 버전은 3.13.5  
 
 
 
@@ -119,3 +115,11 @@ py plot_psd.py results/result_ex1_1.csv results/plots/plot_ex1_1.png
 
 - 한글 깨질 때  
 vscode 실행 후, 오른쪽 하단 인코딩에서 UTF-8 with BOM  
+
+
+
+# 참고  
+
+- 참고를 위해 생성하였던 csv와 플롯은 ignore하지 않음  
+- openPNM  
+- zeo++  

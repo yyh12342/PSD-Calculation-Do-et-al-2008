@@ -4,13 +4,17 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <unordered_map>
 
 // 원자 좌표
 struct Atom
 {
+    int type;
     double x;
     double y;
     double z;
+    double sigmaMix;
+    double sigmaMixSquare;
 };
 
 // 시뮬레이션 박스 정보
@@ -27,18 +31,27 @@ struct Box
     bool pz; // z축의 주기적 경계 flag
 };
 
+
+
+static inline double PotentialAtPoint(
+    double px, double py, double pz,
+    const std::vector<Atom> &atoms,
+    const std::unordered_map<int,double> &sigmaMap);
+
 // 입력 파일 파싱
 void Parse(
     const std::string &filename,
     Box &simulationBox,
     std::vector<Atom> &atoms,
-    int modeNum);
+    int modeNum,
+    const std::unordered_map<int,double> &sigmaMap);
 
 // 몬테카를로로 지름 계산
 std::vector<double> ComputeDiameters(
     const Box &simulationBox,
     const std::vector<Atom> &atoms,
-    int modeNum);
+    int modeNum,
+    const std::unordered_map<int,double> &sigmaMap);
 
 // histogram 구해서 (diameter, V_acc,j) 쌍 리스트 생성
 std::vector<std::pair<double,double>> ComputeAccessibleVolume(
